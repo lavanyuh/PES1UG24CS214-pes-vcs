@@ -6,13 +6,14 @@
 #include "index.h"
 #include "commit.h"
 #include <stdlib.h>
+#include "tree.h"
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 // ─── PROVIDED: Command Implementations ──────────────────────────────────────
-
+int tree_from_index(ObjectID *id_out);
 // Usage: pes init
 void cmd_init(void) {
     if (mkdir(PES_DIR, 0755) != 0 && access(PES_DIR, F_OK) != 0) {
@@ -65,22 +66,31 @@ void cmd_status(void) {
 }
 
 // Usage: pes commit -m <message>
-void cmd_commit(int argc, char *argv[]) {
+int cmd_commit(int argc, char *argv[]) {
     if (argc < 4 || strcmp(argv[2], "-m") != 0) {
         fprintf(stderr, "error: commit requires a message (-m \"message\")\n");
-        return;
+        return -1;
     }
 
     const char *message = argv[3];
     ObjectID commit_id;
-    if (commit_create(message, &commit_id) != 0) {
-        fprintf(stderr, "error: commit failed\n");
-        return;
-    }
+    ObjectID tree_id;
+
+    if (tree_from_index(&tree_id) != 0) {
+      printf("error: failed to create tree\n");
+      return -1;
+}
+
+    if (commit_create(&tree_id, message, &commit_id) != 0) {
+      printf("error: commit failed\n");
+      return -1;
+}
 
     char hex[HASH_HEX_SIZE + 1];
     hash_to_hex(&commit_id, hex);
     printf("Committed: %.12s... %s\n", hex, message);
+
+    return 0;
 }
 
 // Callback for commit_walk used by cmd_log.

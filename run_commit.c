@@ -3,7 +3,32 @@
 
 // forward declarations
 int tree_from_index(ObjectID *id_out);
-int commit_create(const ObjectID *tree_id, const char *message, ObjectID *commit_id);
+int commit_create(const ObjectID *tree_id, const char *message, ObjectID *commit_id) {
+
+    char buffer[1024];
+
+    char tree_hex[HASH_SIZE * 2 + 1];
+    for (int i = 0; i < HASH_SIZE; i++) {
+        sprintf(tree_hex + 2*i, "%02x", tree_id->hash[i]);
+    }
+
+    int len = snprintf(buffer, sizeof(buffer),
+                       "tree %s\nmessage %s\n",
+                       tree_hex, message);
+
+    printf("DEBUG: commit content:\n%s\n", buffer);
+
+    if (len < 0) {
+        printf("DEBUG: snprintf failed\n");
+        return -1;
+    }
+
+    int res = object_write(OBJ_COMMIT, buffer, len, commit_id);
+
+    printf("DEBUG: object_write returned %d\n", res);
+
+    return res;
+}
 
 int main() {
     ObjectID tree_id;

@@ -26,7 +26,7 @@
 #include <fcntl.h>
 
 // forward declaration
-int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
+
 
 // Forward declarations (implemented in object.c)
 int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
