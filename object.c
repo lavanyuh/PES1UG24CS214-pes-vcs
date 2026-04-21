@@ -128,6 +128,20 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
     *slash = '\0';
     mkdir(dir, 0755);
 }
+ char temp_path[512];
+ snprintf(temp_path, sizeof(temp_path), "%.500s.tmp", path);
+
+ int fd = open(temp_path, O_CREAT | O_WRONLY | O_TRUNC, 0644);
+ if (fd < 0) return -1;
+
+ ssize_t written = write(fd, buffer, total_len);
+ if (written < 0 || (size_t)written != total_len) {
+    close(fd);
+    return -1;
+}
+
+ fsync(fd);
+ close(fd);
 }
 
 // Read an object from the store.
