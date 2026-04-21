@@ -25,7 +25,7 @@
 #include <dirent.h>
 
 // ─── PROVIDED ────────────────────────────────────────────────────────────────
-
+int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out);
 // Find an index entry by path (linear scan).
 IndexEntry* index_find(Index *index, const char *path) {
     for (int i = 0; i < index->count; i++) {
@@ -215,8 +215,45 @@ int index_save(const Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_add(Index *index, const char *path) {
-    // TODO: Implement file staging
-    // (See Lab Appendix for logical steps)
-    (void)index; (void)path;
-    return -1;
+
+    FILE *f = fopen(path, "rb");
+    if (!f) return -1;
+
+    fseek(f, 0, SEEK_END);
+    size_t len = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    void *data = malloc(len);
+    if (!data) {
+        fclose(f);
+        return -1;
+    }
+
+    fread(data, 1, len, f);
+    fclose(f);
+
+    ObjectID oid;
+    if (object_write(OBJ_BLOB, data, len, &oid) != 0) {
+        free(data);
+        return -1;
+    }
+
+    free(data);
+
+    IndexEntry *existing = index_find(index, path);
+
+    if (existing) {
+        existing->hash = oid;
+    } else {
+        if (index->count >= MAX_INDEX_ENTRIES) return -1;
+
+        IndexEntry *e = &index->entries[index->count++];
+
+        strncpy(e->path, path, sizeof(e->path));
+        e->path[sizeof(e->path) - 1] = '\0';
+
+        e->hash = oid;
+    }
+
+    return index_save(index);
 }
