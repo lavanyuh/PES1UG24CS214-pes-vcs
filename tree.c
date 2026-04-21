@@ -15,6 +15,8 @@
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include "index.h"
+
 
 // ─── Mode Constants ─────────────────────────────────────────────────────────
 
@@ -128,29 +130,40 @@ int tree_serialize(const Tree *tree, void **data_out, size_t *len_out) {
 //   - tree_serialize  : convert your populated Tree struct into a binary buffer
 //   - object_write    : save that binary buffer to the store as OBJ_TREE
 //
-// Returns 0 on success, -1 on error.
+// Returns 0 oint tree_from_index(ObjectID *id_out) {
 int tree_from_index(ObjectID *id_out) {
-    //iterate index entries
-    char buffer[8192];
-    size_t offset = 0;
-    for (size_t i = 0; i < idx->count; i++) {
 
-      const char *name = idx->entries[i].path;
-      ObjectID oid = idx->entries[i].oid;
+    Index index;
+    if (index_load(&index) != 0) return -1;
 
-      // write "100644 filename\0"
-      int written = snprintf(buffer + offset, sizeof(buffer) - offset, "100644 %s", name);
-      offset += written + 1;   // +1 for '\0'
+    Tree tree;
+    tree.count = 0;
 
-    // append raw hash (20 bytes / HASH_SIZE)
-      memcpy(buffer + offset, oid.hash, HASH_SIZE);
-      offset += HASH_SIZE;
+    for (int i = 0; i < index.count; i++) {
+
+        TreeEntry *entry = &tree.entries[tree.count];
+
+        entry->mode = MODE_FILE;
+
+        strncpy(entry->name, index.entries[i].path, sizeof(entry->name));
+        entry->name[sizeof(entry->name) - 1] = '\0';
+
+        entry->hash = index.entries[i].hash;
+
+        tree.count++;
+    }
+
+    void *data = NULL;
+    size_t len = 0;
+
+    if (tree_serialize(&tree, &data, &len) != 0)
+        return -1;
+
+    int result = object_write(OBJ_TREE, data, len, id_out);
+
+    free(data);
+    return result;
 }
-    ObjectID tree_id;
 
-    if (object_write(OBJ_TREE, buffer, offset, &tree_id) != 0) {
-      return -1;
-}
-    *out = tree_id;
-    return 0;
-}
+
+   
