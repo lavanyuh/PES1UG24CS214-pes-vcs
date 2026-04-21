@@ -7,17 +7,6 @@
 
 ---
 
-## Table of Contents
-
-1. Phase 1 — Object Storage  
-2. Phase 2 — Tree Objects  
-3. Phase 3 — Index / Staging Area  
-4. Phase 4 — Commits and History  
-5. Integration Test  
-6. Phase 5 — Branching and Checkout (Analysis)  
-7. Phase 6 — Garbage Collection (Analysis)  
-
----
 
 ## Phase 1 — Object Storage
 
