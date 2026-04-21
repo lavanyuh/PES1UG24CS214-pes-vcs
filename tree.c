@@ -146,6 +146,9 @@ int tree_from_index(ObjectID *id_out) {
       memcpy(buffer + offset, oid.hash, HASH_SIZE);
       offset += HASH_SIZE;
 }
-    (void)id_out;
-    return -1;
+    ObjectID tree_id;
+
+    if (object_write(OBJ_TREE, buffer, offset, &tree_id) != 0) {
+      return -1;
+}
 }
