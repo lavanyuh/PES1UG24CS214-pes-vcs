@@ -135,17 +135,14 @@ int index_status(const Index *index) {
 //
 // Returns 0 on success, -1 on error.
 int index_load(Index *index) {
-   int index_load(Index *index) {
     FILE *f = fopen(".pes/index", "r");
 
-    // If file does not exist → initialize empty index
     if (!f) {
         index->count = 0;
         return 0;
     }
 
     index->count = 0;
-
     char line[1024];
 
     while (fgets(line, sizeof(line), f)) {
@@ -153,18 +150,15 @@ int index_load(Index *index) {
 
         IndexEntry *entry = &index->entries[index->count];
 
-        // expected format: <hash> <path>
         char hash_str[HASH_SIZE * 2 + 1];
         char path[256];
 
         if (sscanf(line, "%s %s", hash_str, path) != 2)
             continue;
 
-        // copy path
         strncpy(entry->path, path, sizeof(entry->path));
         entry->path[sizeof(entry->path) - 1] = '\0';
 
-        // convert hex string → binary
         for (int i = 0; i < HASH_SIZE; i++) {
             sscanf(hash_str + 2*i, "%2hhx", &entry->hash.hash[i]);
         }
@@ -175,7 +169,9 @@ int index_load(Index *index) {
     fclose(f);
     return 0;
 }
-}
+      
+
+ 
 
 // Save the index to .pes/index atomically.
 //
