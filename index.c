@@ -217,7 +217,11 @@ int index_save(const Index *index) {
 int index_add(Index *index, const char *path) {
 
     FILE *f = fopen(path, "rb");
-    if (!f) return -1;
+    if (!f){
+        printf("debug : file open failed \n");
+        return -1;
+    }
+
 
     fseek(f, 0, SEEK_END);
     size_t len = ftell(f);
@@ -229,11 +233,16 @@ int index_add(Index *index, const char *path) {
         return -1;
     }
 
-    fread(data, 1, len, f);
+    if (fread(data, 1, len, f) != len) {
+     free(data);
+     fclose(f);
+     return -1;
+}
     fclose(f);
 
     ObjectID oid;
     if (object_write(OBJ_BLOB, data, len, &oid) != 0) {
+        printf("debug : object_write failed \n");
         free(data);
         return -1;
     }
@@ -255,5 +264,9 @@ int index_add(Index *index, const char *path) {
         e->hash = oid;
     }
 
-    return index_save(index);
+    if (index_save(index) !=0){
+        printf("debug index_save failed \n");
+        return -1;
+    }
+    return 0;
 }
