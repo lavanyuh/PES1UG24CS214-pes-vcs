@@ -151,4 +151,6 @@ int tree_from_index(ObjectID *id_out) {
     if (object_write(OBJ_TREE, buffer, offset, &tree_id) != 0) {
       return -1;
 }
+    *out = tree_id;
+    return 0;
 }
