@@ -142,6 +142,16 @@ int object_write(ObjectType type, const void *data, size_t len, ObjectID *id_out
 
  fsync(fd);
  close(fd);
+ if (rename(temp_path, path) != 0) return -1;
+
+ int dir_fd = open(dir, O_RDONLY);
+ if (dir_fd >= 0) {
+    fsync(dir_fd);
+    close(dir_fd);
+}
+
+ free(buffer);
+ return 0;
 }
 
 // Read an object from the store.
